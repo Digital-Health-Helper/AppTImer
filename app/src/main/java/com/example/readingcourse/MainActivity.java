@@ -13,6 +13,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.BaseColumns;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -30,13 +31,15 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.txusballesteros.widgets.FitChart;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeUnit;import android.provider.Settings.Secure;
 
 public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
@@ -47,6 +50,8 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<HashMap> topAppsList = new ArrayList<>();
     ConstraintLayout loader;
     AppListAdapter appListAdapter;
+    DatabaseReference mainReference = FirebaseDatabase.getInstance().getReference();
+    private String android_id;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +59,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        android_id = Secure.getString(getContentResolver(), Secure.ANDROID_ID);
+        Log.i("ID", android_id);
         if (!hasUsageStatsPermission(this)) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Permissions Needed")
@@ -235,6 +241,17 @@ public class MainActivity extends AppCompatActivity {
 
             topAppsList = dataUtils.getTopApps();
 
+            for(int i = 0; i < Math.min(topAppsList.size(), 5); i++){
+                HashMap map = topAppsList.get(i);
+                Log.i("App map", map.toString());
+                for(Object obj : map.keySet()){
+                    String key = obj.toString();
+                    String keyDash = obj.toString().replace('.', '-');
+                    mainReference.child("topApps").child(android_id).child(i + "").child("app").setValue(keyDash);
+                    mainReference.child("topApps").child(android_id).child(i + "").child("time").setValue(map.get(key));
+                    Log.i("MAIN REFERENCE", key + " : " + map.get(key));
+                }
+            }
             return null;
         }
 
