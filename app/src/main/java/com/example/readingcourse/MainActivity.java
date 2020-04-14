@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+
 public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private RecyclerView.Adapter mAdapter;
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     UsageStatsManager usageStatsManager;
     Context context;
     ArrayList<HashMap> topAppsList = new ArrayList<>();
+    ArrayList<HashMap> appTimers = new ArrayList<>();
     ConstraintLayout loader;
     AppListAdapter appListAdapter;
 
@@ -223,6 +225,7 @@ public class MainActivity extends AppCompatActivity {
         new RefreshDatabaseTask().execute();
         new RefreshFitChartTask().execute();
     }
+    DataUtils dataUtils;
 
     private class RefreshDatabaseTask extends AsyncTask<Void, Void, Void> {
 
@@ -230,17 +233,18 @@ public class MainActivity extends AppCompatActivity {
         protected Void doInBackground(Void... voids) {
             loader.setVisibility(View.VISIBLE);
 
-            DataUtils dataUtils = new DataUtils(context);
+            dataUtils = new DataUtils(context);
             dataUtils.refreshDatabase();
 
             topAppsList = dataUtils.getTopApps();
 
+
+
             return null;
         }
-
         @Override
         protected void onPostExecute(Void aVoid) {
-            appListAdapter = new AppListAdapter(topAppsList);
+            appListAdapter = new AppListAdapter(topAppsList,dataUtils);
             appListAdapter.notifyDataSetChanged();
             recyclerView.setAdapter(appListAdapter);
         }

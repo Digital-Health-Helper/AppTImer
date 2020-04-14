@@ -51,6 +51,7 @@ final class AppTimerContract {
         static final String COLUMN_NAME_DATE = "date";
         static final String COLUMN_NAME_TIME_SLOT = "time_slot";
         static final String COLUMN_NAME_TIME_SLOT_DURATION = "time_slot_duration";
+        static final String COLUMN_NAME_ACTION_TIME_LIMIT = "action_time_limit";
         static final String COLUMN_NAME_TIME_SLOT_PERCENTAGE = "time_slot_percentage";
         static final String COLUMN_NAME_TIME_SLOT_NUMBER = "time_slot_number";
 
@@ -65,6 +66,7 @@ final class AppTimerContract {
                     COLUMN_NAME_TIME_SLOT + " TEXT, " +
                     COLUMN_NAME_TIME_SLOT_DURATION + " TEXT, " +
                     COLUMN_NAME_TIME_SLOT_NUMBER + " TEXT, " +
+                    COLUMN_NAME_ACTION_TIME_LIMIT + " TEXT, "+
                     COLUMN_NAME_TIME_SLOT_PERCENTAGE + " TEXT)";
         }
     }
@@ -92,5 +94,20 @@ final class AppTimerContract {
                     COLUMN_NAME_SHOW_NAG + " BOOLEAN, " +
                     COLUMN_NAME_TARGET_USAGE_TIME + " TEXT)";
         }
+    }
+    static class IndividualTimerLimits implements BaseColumns{
+        static final String TABLE_NAME = "individual_timer_limits";
+        static final String COLUMN_NAME_PACKAGE_NAME = "package_name";
+        static final String COLUMN_NAME_LIMIT_USAGE_TIME = "limit_usage_time";
+        static String get_delete_sql() {
+            return "DROP TABLE IF EXISTS " + TABLE_NAME;
+        }
+        static String get_create_sql() {
+            return "CREATE TABLE " + TABLE_NAME + " (" +
+                    COLUMN_NAME_PACKAGE_NAME + " TEXT, " +
+                    COLUMN_NAME_LIMIT_USAGE_TIME +
+                  " TEXT)";
+        }
+
     }
 }

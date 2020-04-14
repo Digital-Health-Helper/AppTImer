@@ -15,6 +15,7 @@ import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -24,6 +25,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import com.rvalerio.fgchecker.AppChecker;
 
@@ -76,7 +78,7 @@ public class FloatService extends Service {
         thour = floaterView.findViewById(R.id.thours);
         tminute = floaterView.findViewById(R.id.tminutes);
         progressBar = floaterView.findViewById(R.id.progressBar);
-        floaterView.setVisibility(View.GONE);
+        floaterView.setVisibility(View.VISIBLE);
         updateUsageTime();
 
         int LAYOUT_FLAG;
@@ -153,6 +155,8 @@ public class FloatService extends Service {
                             totalUsageTime += 1000;
                             counter++;
                             floaterView.setVisibility(View.VISIBLE);
+                            Long timeLimit = AppTimer.appTimerPreferences.getLong(packageName,-1L);
+
 
                             if (!packageName.equals(currentPackage)) {
                                 currentPackage = packageName;
@@ -167,11 +171,31 @@ public class FloatService extends Service {
                                 packageDuration += 1000L;
                                 packageUsageTime.put(packageName, packageDuration);
                             }
-
+                            Log.e("HELP",timeLimit+" "+packageName+" "+packageDuration);
                             long hours = TimeUnit.MILLISECONDS.toHours(packageDuration);
                             long minutes = TimeUnit.MILLISECONDS.toMinutes(packageDuration - TimeUnit.HOURS.toMillis(hours));
                             long thours = TimeUnit.MILLISECONDS.toHours(totalUsageTime);
                             long tminutes = TimeUnit.MILLISECONDS.toMinutes(totalUsageTime - TimeUnit.HOURS.toMillis(thours));
+                            if(timeLimit<packageDuration){
+                                Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
+
+                                PendingIntent pendingIntent =
+                                        PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
+                                Notification notification =
+                                        new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID)
+                                                .setContentTitle("AppTimer")
+                                                .setContentText("TimeLimitExceeded")
+                                                .setSmallIcon(R.drawable.ic_notif)
+                                                .setContentIntent(pendingIntent)
+                                                .setTicker("AppTimer is running")
+                                                .build();
+                                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
+                                notificationManager.notify(111, notification);
+
+                                startForeground(ONGOING_NOTIFICATION_ID, notification);
+
+
+                            }
 
                             hour.setText(String.format(Locale.getDefault(), "%s", Long.toString(hours)));
                             minute.setText(String.format(Locale.getDefault(), "%02d", minutes));
@@ -180,8 +204,7 @@ public class FloatService extends Service {
 
                             if (totalUsageTime > targetUsage
                                     && counter % 10 == 0
-                                    && counter != 0
-                                    && appTimerSettings.get("nag") == 1) {
+                                    && counter != 0) {
                                 Intent intent = new Intent(getApplicationContext(), OveruseAlertActivity.class);
                                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 startActivity(intent);
