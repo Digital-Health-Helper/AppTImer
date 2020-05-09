@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "143417185089",
+    "firebase_url": "https://digitalwellbeingapp.firebaseio.com",
+    "project_id": "digitalwellbeingapp",
+    "storage_bucket": "digitalwellbeingapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:143417185089:android:f5b1faf6df722794fa47c0",
+        "android_client_info": {
+          "package_name": "com.example.readingcourse"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "143417185089-qit6mqnsffbv8e8j8ui91mh22u8nq4kv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbUjOJ4D1wgpu72EGrZLRWqjR_AfOtzrU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "143417185089-qit6mqnsffbv8e8j8ui91mh22u8nq4kv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
