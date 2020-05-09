@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;import android.provider.Settings.Secure;
 
+
 public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private RecyclerView.Adapter mAdapter;
@@ -48,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     UsageStatsManager usageStatsManager;
     Context context;
     ArrayList<HashMap> topAppsList = new ArrayList<>();
+    ArrayList<HashMap> appTimers = new ArrayList<>();
     ConstraintLayout loader;
     AppListAdapter appListAdapter;
     DatabaseReference mainReference = FirebaseDatabase.getInstance().getReference();
@@ -204,8 +206,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         stopService(new Intent(getApplication(), FloatService.class));
+        super.onDestroy();
     }
 
     private void refreshFitChart(long targetUsage, long currentUsage) {
@@ -229,6 +231,7 @@ public class MainActivity extends AppCompatActivity {
         new RefreshDatabaseTask().execute();
         new RefreshFitChartTask().execute();
     }
+    DataUtils dataUtils;
 
     private class RefreshDatabaseTask extends AsyncTask<Void, Void, Void> {
 
@@ -236,10 +239,11 @@ public class MainActivity extends AppCompatActivity {
         protected Void doInBackground(Void... voids) {
             loader.setVisibility(View.VISIBLE);
 
-            DataUtils dataUtils = new DataUtils(context);
+            dataUtils = new DataUtils(context);
             dataUtils.refreshDatabase();
 
             topAppsList = dataUtils.getTopApps();
+
 
             for(int i = 0; i < Math.min(topAppsList.size(), 5); i++){
                 HashMap map = topAppsList.get(i);
@@ -252,12 +256,12 @@ public class MainActivity extends AppCompatActivity {
                     Log.i("MAIN REFERENCE", key + " : " + map.get(key));
                 }
             }
+
             return null;
         }
-
         @Override
         protected void onPostExecute(Void aVoid) {
-            appListAdapter = new AppListAdapter(topAppsList);
+            appListAdapter = new AppListAdapter(topAppsList,dataUtils);
             appListAdapter.notifyDataSetChanged();
             recyclerView.setAdapter(appListAdapter);
         }

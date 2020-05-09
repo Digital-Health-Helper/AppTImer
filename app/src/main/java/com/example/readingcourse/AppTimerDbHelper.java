@@ -3,6 +3,7 @@ package com.example.readingcourse;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 public class AppTimerDbHelper extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 1;
@@ -18,15 +19,18 @@ public class AppTimerDbHelper extends SQLiteOpenHelper {
         db.execSQL(AppTimerContract.ApplicationLog.get_delete_sql());
         db.execSQL(AppTimerContract.ApplicationLogSummary.get_delete_sql());
         db.execSQL(AppTimerContract.AppTimerSettings.get_delete_sql());
+        db.execSQL(AppTimerContract.IndividualTimerLimits.get_delete_sql());
         onCreate(db);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        Log.e("HELP","UPDATED DB");
         db.execSQL(AppTimerContract.ApplicationLogRaw.get_create_sql());
         db.execSQL(AppTimerContract.ApplicationLog.get_create_sql());
         db.execSQL(AppTimerContract.ApplicationLogSummary.get_create_sql());
         db.execSQL(AppTimerContract.AppTimerSettings.get_create_sql());
+        db.execSQL(AppTimerContract.IndividualTimerLimits.get_create_sql());
     }
 
     @Override

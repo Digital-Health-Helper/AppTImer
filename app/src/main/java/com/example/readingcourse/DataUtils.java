@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -43,6 +44,31 @@ class DataUtils {
                 contentValues,
                 null, null
         );
+    }
+    void saveTimeLimits(String appName, int hourLimit, int minuteLimit){
+        Long timeLimit = TimeUnit.HOURS.toMillis(hourLimit)
+                + TimeUnit.MINUTES.toMillis(minuteLimit);
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(AppTimerContract.IndividualTimerLimits.COLUMN_NAME_PACKAGE_NAME, appName);
+        contentValues.put(AppTimerContract.IndividualTimerLimits.COLUMN_NAME_LIMIT_USAGE_TIME, timeLimit);
+        db = dbHelper.getWritableDatabase();
+        db.beginTransaction();
+        Log.e("HELP",appName);
+        if(getAppTimeLimit(appName)==null){
+            db.update(
+                    AppTimerContract.IndividualTimerLimits.TABLE_NAME,
+                    contentValues,
+                    null, null
+            );
+        }
+        else{
+            db.insert(AppTimerContract.IndividualTimerLimits.TABLE_NAME,null,contentValues);
+        }
+        db.setTransactionSuccessful();
+        db.endTransaction();
+        Log.e("HELP",getAppTimeLimit(appName)+"");
+
+
     }
 
     void saveFloaterPosition(int x, int y) {
@@ -344,6 +370,30 @@ class DataUtils {
         cursor.close();
     }
 
+    Long  getAppTimeLimit(String packageName) {
+        Log.e("HELP",packageName);
+        db.beginTransaction();
+
+        String selectQuery = "SELECT * "+" FROM " + AppTimerContract.IndividualTimerLimits.TABLE_NAME
+                + " WHERE "+AppTimerContract.IndividualTimerLimits.COLUMN_NAME_PACKAGE_NAME+" = \""
+                +packageName+"\"";
+        Cursor cursor      = db.rawQuery(selectQuery, null);
+        Long data      = null;
+
+        if (cursor.moveToFirst()) {
+            do {
+                Log.e("HEERRR",cursor.getClass().toString());
+                data = cursor.getLong(cursor.getColumnIndexOrThrow(AppTimerContract.IndividualTimerLimits.COLUMN_NAME_LIMIT_USAGE_TIME));
+                // get the data into array, or class variable
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.setTransactionSuccessful();
+        db.endTransaction();
+
+        return data;
+    }
+
     private ArrayList<HashMap> getSlotSplit(long startTime, long endTime) {
         Calendar currentTime = Calendar.getInstance();
         Calendar previousTime;
@@ -443,21 +493,11 @@ class DataUtils {
             HashMap<String, Long> maxMap = new HashMap<>();
             maxMap.put(maxEntry.getKey(), maxEntry.getValue());
             topAppsList.add(maxMap);
-            if (topAppsList.size() == 5) {
-                HashMap<String, Long> emptyMap = new HashMap<>();
-                emptyMap.put("adview", 0L);
-                topAppsList.add(emptyMap);
-            }
+
             hashMap.remove(maxEntry.getKey());
         }
 
         cursor.close();
-
-        if (topAppsList.size() < 5) {
-            HashMap<String, Long> emptyMap = new HashMap<>();
-            emptyMap.put("adview", 0L);
-            topAppsList.add(emptyMap);
-        }
 
         return topAppsList;
     }

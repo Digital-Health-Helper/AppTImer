@@ -1,6 +1,7 @@
 package com.example.readingcourse;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -15,6 +16,7 @@ import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -24,6 +26,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import com.rvalerio.fgchecker.AppChecker;
 
@@ -60,6 +63,7 @@ public class FloatService extends Service {
 
         dataUtils = new DataUtils(getApplicationContext());
         dataUtils.refreshDatabase();
+        Log.e("HELP","BACKBABY");
 
         final HashMap<String, Integer> appTimerSettings = dataUtils.getSettings();
         final Long targetUsage = TimeUnit.HOURS.toMillis((long) appTimerSettings.get("hours"))
@@ -76,7 +80,7 @@ public class FloatService extends Service {
         thour = floaterView.findViewById(R.id.thours);
         tminute = floaterView.findViewById(R.id.tminutes);
         progressBar = floaterView.findViewById(R.id.progressBar);
-        floaterView.setVisibility(View.GONE);
+        floaterView.setVisibility(View.VISIBLE);
         updateUsageTime();
 
         int LAYOUT_FLAG;
@@ -153,6 +157,8 @@ public class FloatService extends Service {
                             totalUsageTime += 1000;
                             counter++;
                             floaterView.setVisibility(View.VISIBLE);
+                            Long timeLimit = AppTimer.appTimerPreferences.getLong(packageName,-1L);
+
 
                             if (!packageName.equals(currentPackage)) {
                                 currentPackage = packageName;
@@ -167,24 +173,58 @@ public class FloatService extends Service {
                                 packageDuration += 1000L;
                                 packageUsageTime.put(packageName, packageDuration);
                             }
-
+                            Log.e("HELP",timeLimit+" "+packageName+" "+packageDuration);
                             long hours = TimeUnit.MILLISECONDS.toHours(packageDuration);
                             long minutes = TimeUnit.MILLISECONDS.toMinutes(packageDuration - TimeUnit.HOURS.toMillis(hours));
                             long thours = TimeUnit.MILLISECONDS.toHours(totalUsageTime);
                             long tminutes = TimeUnit.MILLISECONDS.toMinutes(totalUsageTime - TimeUnit.HOURS.toMillis(thours));
+                            if( timeLimit>1000L && timeLimit<packageDuration){
+                                Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
+
+                                PendingIntent pendingIntent =
+                                        PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
+                                Notification notification =
+                                        null;
+                                try {
+                                    notification = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID)
+                                            .setContentTitle(pm.getApplicationInfo(packageName, 0) != null ? pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)) : packageName)
+                                            .setPriority(Notification.PRIORITY_MAX)
+                                            .setContentText("Your time limit has exceeded")
+                                            .setSmallIcon(R.drawable.ic_notif)
+                                            .setContentIntent(pendingIntent)
+                                            .setTicker("AppTimer is running")
+                                            .build();
+                                    Intent intent = new Intent(getApplicationContext(), OveruseAlertActivity.class);
+                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    startActivity(intent);
+
+
+                                } catch (PackageManager.NameNotFoundException e) {
+                                    notification = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID)
+                                            .setContentTitle(packageName)
+                                            .setPriority(Notification.PRIORITY_MAX)
+                                            .setContentText("Your time limit has exceeded")
+                                            .setSmallIcon(R.drawable.ic_notif)
+                                            .setContentIntent(pendingIntent)
+                                            .setTicker("AppTimer is running")
+                                            .build();
+                                }
+                                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
+                                notificationManager.notify(111, notification);
+
+                                startForeground(ONGOING_NOTIFICATION_ID, notification);
+
+
+                            }
 
                             hour.setText(String.format(Locale.getDefault(), "%s", Long.toString(hours)));
                             minute.setText(String.format(Locale.getDefault(), "%02d", minutes));
                             thour.setText(String.format(Locale.getDefault(), "%s", Long.toString(thours)));
                             tminute.setText(String.format(Locale.getDefault(), "%02d", tminutes));
 
-                            if (totalUsageTime > targetUsage
-                                    && counter % 10 == 0
-                                    && counter != 0
-                                    && appTimerSettings.get("nag") == 1) {
-                                Intent intent = new Intent(getApplicationContext(), OveruseAlertActivity.class);
-                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                startActivity(intent);
+                            if (timeLimit<packageDuration
+                            ) {
+
                             }
                         } else {
                             floaterView.setVisibility(View.GONE);
@@ -202,6 +242,11 @@ public class FloatService extends Service {
         if (floaterView != null) windowManager.removeView(floaterView);
         appChecker.stop();
         dataUtils.saveFloaterPosition(floaterXPos, floaterYPos);
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction("restartservice");
+        broadcastIntent.setClass(this, ReceiverCall.class);
+        Log.e("HELP","KILLED");
+        this.sendBroadcast(broadcastIntent);
     }
 
     @Override
@@ -258,7 +303,7 @@ public class FloatService extends Service {
         // the NotificationChannel class is new and not in the support library
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             String description = "AppTimer notifications";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_DEFAULT_IMPORTANCE, importance);
             channel.setDescription(description);
             // Register the channel with the system; you can't change the importance
