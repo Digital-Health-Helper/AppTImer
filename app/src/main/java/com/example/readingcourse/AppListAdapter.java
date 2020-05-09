@@ -87,7 +87,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ListView
                 } else if (minutes != 0) {
                     listViewHolder.timeLimit.setText(String.format(Locale.getDefault(), "%dmin", (int) minutes));
                 } else {
-                    listViewHolder.timeLimit.setText(String.format(Locale.getDefault(), "Less than %dmin", 1));
+                    listViewHolder.timeLimit.setText(String.format(Locale.getDefault(), "No Timer Set", 1));
                 }
 
         }

@@ -1,6 +1,7 @@
 package com.example.readingcourse;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -62,6 +63,7 @@ public class FloatService extends Service {
 
         dataUtils = new DataUtils(getApplicationContext());
         dataUtils.refreshDatabase();
+        Log.e("HELP","BACKBABY");
 
         final HashMap<String, Integer> appTimerSettings = dataUtils.getSettings();
         final Long targetUsage = TimeUnit.HOURS.toMillis((long) appTimerSettings.get("hours"))
@@ -176,19 +178,37 @@ public class FloatService extends Service {
                             long minutes = TimeUnit.MILLISECONDS.toMinutes(packageDuration - TimeUnit.HOURS.toMillis(hours));
                             long thours = TimeUnit.MILLISECONDS.toHours(totalUsageTime);
                             long tminutes = TimeUnit.MILLISECONDS.toMinutes(totalUsageTime - TimeUnit.HOURS.toMillis(thours));
-                            if(timeLimit<packageDuration){
+                            if( timeLimit>1000L && timeLimit<packageDuration){
                                 Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
 
                                 PendingIntent pendingIntent =
                                         PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
                                 Notification notification =
-                                        new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID)
-                                                .setContentTitle("AppTimer")
-                                                .setContentText("TimeLimitExceeded")
-                                                .setSmallIcon(R.drawable.ic_notif)
-                                                .setContentIntent(pendingIntent)
-                                                .setTicker("AppTimer is running")
-                                                .build();
+                                        null;
+                                try {
+                                    notification = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID)
+                                            .setContentTitle(pm.getApplicationInfo(packageName, 0) != null ? pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)) : packageName)
+                                            .setPriority(Notification.PRIORITY_MAX)
+                                            .setContentText("Your time limit has exceeded")
+                                            .setSmallIcon(R.drawable.ic_notif)
+                                            .setContentIntent(pendingIntent)
+                                            .setTicker("AppTimer is running")
+                                            .build();
+                                    Intent intent = new Intent(getApplicationContext(), OveruseAlertActivity.class);
+                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    startActivity(intent);
+
+
+                                } catch (PackageManager.NameNotFoundException e) {
+                                    notification = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID)
+                                            .setContentTitle(packageName)
+                                            .setPriority(Notification.PRIORITY_MAX)
+                                            .setContentText("Your time limit has exceeded")
+                                            .setSmallIcon(R.drawable.ic_notif)
+                                            .setContentIntent(pendingIntent)
+                                            .setTicker("AppTimer is running")
+                                            .build();
+                                }
                                 NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
                                 notificationManager.notify(111, notification);
 
@@ -202,12 +222,9 @@ public class FloatService extends Service {
                             thour.setText(String.format(Locale.getDefault(), "%s", Long.toString(thours)));
                             tminute.setText(String.format(Locale.getDefault(), "%02d", tminutes));
 
-                            if (totalUsageTime > targetUsage
-                                    && counter % 10 == 0
-                                    && counter != 0) {
-                                Intent intent = new Intent(getApplicationContext(), OveruseAlertActivity.class);
-                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                startActivity(intent);
+                            if (timeLimit<packageDuration
+                            ) {
+
                             }
                         } else {
                             floaterView.setVisibility(View.GONE);
@@ -225,6 +242,11 @@ public class FloatService extends Service {
         if (floaterView != null) windowManager.removeView(floaterView);
         appChecker.stop();
         dataUtils.saveFloaterPosition(floaterXPos, floaterYPos);
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction("restartservice");
+        broadcastIntent.setClass(this, ReceiverCall.class);
+        Log.e("HELP","KILLED");
+        this.sendBroadcast(broadcastIntent);
     }
 
     @Override
@@ -281,7 +303,7 @@ public class FloatService extends Service {
         // the NotificationChannel class is new and not in the support library
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             String description = "AppTimer notifications";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_DEFAULT_IMPORTANCE, importance);
             channel.setDescription(description);
             // Register the channel with the system; you can't change the importance

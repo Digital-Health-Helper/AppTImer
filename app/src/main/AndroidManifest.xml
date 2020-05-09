@@ -34,10 +34,17 @@
             android:theme="@android:style/Theme.Holo.Light.Dialog.NoActionBar" />
 
         <service android:name=".FloatService" />
+        <receiver android:name="ReceiverCall" >
+            <intent-filter>
+                <action android:name="restartservice" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
         <receiver android:name=".AutoStart">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="restartservice" />
             </intent-filter>
         </receiver>
     </application>
